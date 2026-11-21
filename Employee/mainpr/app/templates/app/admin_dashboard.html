@@ -1,0 +1,459 @@
+{% extends "base.html" %}
+{% block title %}Admin Dashboard{% endblock %}
+
+{% block extra_css %}
+<style>
+  .dashboard-top {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1.25rem;
+  }
+
+  .dashboard-top h2 {
+    margin: 0;
+    font-size: 1.35rem;
+  }
+
+  .actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 0.85rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .stat-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 0.95rem 1.1rem;
+    cursor: pointer;
+    transition: border-color 0.15s ease, transform 0.15s ease;
+  }
+
+  .stat-card:hover {
+    border-color: var(--primary);
+    transform: translateY(-2px);
+  }
+
+  .stat-label {
+    font-size: 0.8rem;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  .stat-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin-top: 0.2rem;
+  }
+
+  .toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 1.25rem;
+  }
+
+  .tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+  }
+
+  .tab-btn {
+    background: transparent;
+    border: 1px solid transparent;
+    padding: 0.4rem 0.75rem;
+    border-radius: 6px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--muted);
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+
+  .tab-btn:hover {
+    color: var(--text);
+    background: #e2e8f0;
+  }
+
+  .tab-btn.active {
+    background: var(--surface);
+    color: var(--primary);
+    border-color: var(--border);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+  }
+
+  .search-input {
+    padding: 0.42rem 0.75rem;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    font-size: 0.875rem;
+    min-width: 230px;
+    background: var(--surface);
+  }
+
+  .search-input:focus {
+    outline: none;
+    border-color: var(--primary);
+  }
+
+  .section-panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    margin-bottom: 1.5rem;
+    overflow: hidden;
+  }
+
+  .section-panel.hidden {
+    display: none;
+  }
+
+  .section-header {
+    padding: 0.85rem 1.15rem;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .section-header h3 {
+    margin: 0;
+    font-size: 1rem;
+  }
+
+  .table-wrap {
+    overflow-x: auto;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9rem;
+  }
+
+  th, td {
+    padding: 0.65rem 1.15rem;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+  }
+
+  tr:last-child td {
+    border-bottom: none;
+  }
+
+  th {
+    background: #f8fafc;
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    color: var(--muted);
+    font-weight: 600;
+  }
+
+  tbody tr {
+    transition: background 0.12s ease;
+  }
+
+  tbody tr:hover {
+    background: #f8fafc;
+  }
+
+  .badge {
+    display: inline-block;
+    padding: 0.15rem 0.55rem;
+    border-radius: 999px;
+    font-size: 0.75rem;
+    font-weight: 600;
+  }
+
+  .badge-planned {
+    background: #f1f5f9;
+    color: #475569;
+  }
+
+  .badge-active {
+    background: #dbeafe;
+    color: #1e40af;
+  }
+
+  .badge-completed {
+    background: #dcfce7;
+    color: #166534;
+  }
+
+  .chip {
+    display: inline-block;
+    background: #f1f5f9;
+    border: 1px solid var(--border);
+    padding: 0.1rem 0.45rem;
+    border-radius: 4px;
+    font-size: 0.78rem;
+    margin: 0.1rem 0.15rem 0.1rem 0;
+  }
+
+  .row-actions {
+    display: flex;
+    gap: 0.4rem;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+  <div class="dashboard-top">
+    <h2>Admin Dashboard</h2>
+    <div class="actions">
+      <a href="{% url 'add_employee' %}" class="btn btn-primary">+ Add Employee</a>
+      <a href="{% url 'create_group' %}" class="btn">+ Create Group</a>
+      <a href="{% url 'create_project' %}" class="btn">+ New Project</a>
+      <a href="{% url 'send_notification' %}" class="btn">+ Send Notification</a>
+    </div>
+  </div>
+
+  <!-- Interactive Summary Cards -->
+  <div class="stats-grid">
+    <div class="stat-card" onclick="selectTab('employees')">
+      <div class="stat-label">Employees</div>
+      <div class="stat-value">{{ employees|length }}</div>
+    </div>
+    <div class="stat-card" onclick="selectTab('groups')">
+      <div class="stat-label">Groups</div>
+      <div class="stat-value">{{ groups|length }}</div>
+    </div>
+    <div class="stat-card" onclick="selectTab('projects')">
+      <div class="stat-label">Projects</div>
+      <div class="stat-value">{{ projects|length }}</div>
+    </div>
+    <div class="stat-card" onclick="selectTab('notifications')">
+      <div class="stat-label">Recent Alerts</div>
+      <div class="stat-value">{{ notifications|length }}</div>
+    </div>
+  </div>
+
+  <!-- Filter Tabs & Live Search -->
+  <div class="toolbar">
+    <div class="tabs" role="tablist">
+      <button type="button" class="tab-btn active" data-target="all" onclick="selectTab('all')">All Sections</button>
+      <button type="button" class="tab-btn" data-target="employees" onclick="selectTab('employees')">Employees</button>
+      <button type="button" class="tab-btn" data-target="groups" onclick="selectTab('groups')">Groups</button>
+      <button type="button" class="tab-btn" data-target="projects" onclick="selectTab('projects')">Projects</button>
+      <button type="button" class="tab-btn" data-target="notifications" onclick="selectTab('notifications')">Notifications</button>
+    </div>
+    <input
+      type="search"
+      id="dashboardSearch"
+      class="search-input"
+      placeholder="Filter rows by name, group, project..."
+      oninput="filterRows(this.value)"
+    >
+  </div>
+
+  <!-- Employees Section -->
+  <section class="section-panel" data-section="employees">
+    <div class="section-header">
+      <h3>Employees</h3>
+      <a href="{% url 'add_employee' %}" class="btn btn-sm">+ Add</a>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Username</th>
+            <th>Name</th>
+            <th>Job Title</th>
+            <th>Department</th>
+            <th>Group</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for emp in employees %}
+            <tr class="filterable-row">
+              <td><strong>{{ emp.username }}</strong></td>
+              <td>{{ emp.get_full_name|default:"-" }}</td>
+              <td>{{ emp.employee_profile.job_title|default:"-" }}</td>
+              <td>{{ emp.employee_profile.department|default:"-" }}</td>
+              <td>
+                {% if emp.employee_profile.group %}
+                  <span class="chip">{{ emp.employee_profile.group.name }}</span>
+                {% else %}
+                  <span style="color: var(--muted);">-</span>
+                {% endif %}
+              </td>
+              <td>
+                <div class="row-actions">
+                  <a href="{% url 'edit_employee' emp.id %}" class="btn btn-sm">Edit</a>
+                  <a href="{% url 'delete_employee' emp.id %}" class="btn btn-sm btn-danger">Delete</a>
+                </div>
+              </td>
+            </tr>
+          {% empty %}
+            <tr><td colspan="6" style="color: var(--muted);">No employees yet.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- Employee Groups Section -->
+  <section class="section-panel" data-section="groups">
+    <div class="section-header">
+      <h3>Employee Groups</h3>
+      <a href="{% url 'create_group' %}" class="btn btn-sm">+ New Group</a>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Group Name</th>
+            <th>Description</th>
+            <th>Members</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for grp in groups %}
+            <tr class="filterable-row">
+              <td><strong>{{ grp.name }}</strong></td>
+              <td>{{ grp.description|default:"-" }}</td>
+              <td>
+                {% for prof in grp.members.all %}
+                  <span class="chip">{{ prof.user.username }}</span>
+                {% empty %}
+                  <span style="color: var(--muted);">None</span>
+                {% endfor %}
+              </td>
+              <td>
+                <a href="{% url 'edit_group' grp.id %}" class="btn btn-sm">Edit / Members</a>
+              </td>
+            </tr>
+          {% empty %}
+            <tr><td colspan="4" style="color: var(--muted);">No groups created yet.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- Projects Section -->
+  <section class="section-panel" data-section="projects">
+    <div class="section-header">
+      <h3>Projects</h3>
+      <a href="{% url 'create_project' %}" class="btn btn-sm">+ New Project</a>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Project</th>
+            <th>Status</th>
+            <th>Assigned Employees</th>
+            <th>Assigned Groups</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for proj in projects %}
+            <tr class="filterable-row">
+              <td>
+                <strong>{{ proj.title }}</strong>
+                {% if proj.description %}
+                  <div style="font-size: 0.82rem; color: var(--muted);">{{ proj.description }}</div>
+                {% endif %}
+              </td>
+              <td>
+                <span class="badge badge-{{ proj.status }}">{{ proj.get_status_display }}</span>
+              </td>
+              <td>
+                {% for u in proj.assigned_employees.all %}
+                  <span class="chip">{{ u.username }}</span>
+                {% empty %}
+                  <span style="color: var(--muted);">-</span>
+                {% endfor %}
+              </td>
+              <td>
+                {% for g in proj.assigned_groups.all %}
+                  <span class="chip">{{ g.name }}</span>
+                {% empty %}
+                  <span style="color: var(--muted);">-</span>
+                {% endfor %}
+              </td>
+              <td>
+                <a href="{% url 'edit_project' proj.id %}" class="btn btn-sm">Assign / Edit</a>
+              </td>
+            </tr>
+          {% empty %}
+            <tr><td colspan="5" style="color: var(--muted);">No projects yet.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- Recent Notifications Section -->
+  <section class="section-panel" data-section="notifications">
+    <div class="section-header">
+      <h3>Recent Notifications</h3>
+      <a href="{% url 'send_notification' %}" class="btn btn-sm">+ Send</a>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Recipient</th>
+            <th>Message</th>
+            <th>Sent At</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for n in notifications %}
+            <tr class="filterable-row">
+              <td><strong>{{ n.recipient.username }}</strong></td>
+              <td>{{ n.message }}</td>
+              <td style="color: var(--muted); white-space: nowrap;">{{ n.created_at|date:"Y-m-d H:i" }}</td>
+            </tr>
+          {% empty %}
+            <tr><td colspan="3" style="color: var(--muted);">No notifications sent yet.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <script>
+    function selectTab(target) {
+      document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.target === target);
+      });
+
+      document.querySelectorAll('.section-panel').forEach(panel => {
+        if (target === 'all' || panel.dataset.section === target) {
+          panel.classList.remove('hidden');
+        } else {
+          panel.classList.add('hidden');
+        }
+      });
+    }
+
+    function filterRows(query) {
+      const term = query.trim().toLowerCase();
+      document.querySelectorAll('.filterable-row').forEach(row => {
+        const text = row.textContent.toLowerCase();
+        row.style.display = text.includes(term) ? '' : 'none';
+      });
+    }
+  </script>
+{% endblock %}

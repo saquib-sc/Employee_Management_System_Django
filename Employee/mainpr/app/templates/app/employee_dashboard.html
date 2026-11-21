@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block title %}My Workspace{% endblock %}
+{% block content %}
+  <h2>My Assigned Info (Read-Only)</h2>
+
+  <div class="card">
+    <p><strong>Name:</strong> {{ user.get_full_name|default:user.username }}</p>
+    <p><strong>Role / Title:</strong> {{ profile.job_title|default:"-" }}</p>
+    <p><strong>Department:</strong> {{ profile.department|default:"-" }}</p>
+    <p><strong>Employee Group:</strong> {{ user_group.name|default:"None" }}</p>
+  </div>
+
+  <h3>Assigned Projects</h3>
+  {% for proj in projects %}
+    <div class="card">
+      <h4>{{ proj.title }} ({{ proj.get_status_display }})</h4>
+      <p>{{ proj.description|default:"No description provided." }}</p>
+    </div>
+  {% empty %}
+    <p>No projects assigned to you or your group yet.</p>
+  {% endfor %}
+
+  <h3>Notifications</h3>
+  {% for n in notifications %}
+    <div class="card">
+      <p>{{ n.message }}</p>
+      <small>From {{ n.sender.username|default:"Admin" }} on {{ n.created_at|date:"Y-m-d H:i" }}</small>
+    </div>
+  {% empty %}
+    <p>No notifications.</p>
+  {% endfor %}
+{% endblock %}
